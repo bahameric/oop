@@ -1,0 +1,107 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar 24 01:02:28 2025
+
+@author: furkan kara
+"""
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+def main():
+    # 1. Sınırları al
+    x_min, x_max, y_min, y_max, z_min, z_max = getBoundaries()
+
+    # 2. Noktaları üret
+    pc = generatePointCloud()
+
+    # 3. Kaydet
+    savePointCloud(pc)
+
+    # 4. DataFrame'e çevir
+    df = convertPCToDataFrame(pc)
+
+    # 5. İçerideki noktaları bul
+    indices = findIndicesOfPointInBoundaries(df, x_min, x_max, y_min, y_max, z_min, z_max)
+
+    # 6. Flag al
+    flag = input("Extract içindekiler mi? (True/False): ").lower() == "true"
+
+    # 7. Böl ve yaz
+    extracted, remaining = findPoints(pc, indices, flag)
+    writeExtractedRemainingToCSV(extracted, remaining)
+
+    # 8. Çiz
+    plotFilteredPoints(f"extracted_points_furkan_kara.csv", f"remaining_points_furkan_kara.csv")
+
+
+def getBoundaries():
+    x_min = int(input("Enter the x minimum "))
+    x_max = int(input("Enter the x maximum "))
+    y_min = int(input("Enter the y minimum "))
+    y_max = int(input("Enter the y maximum "))
+    z_min = int(input("Enter the z minimum "))
+    z_max = int(input("Enter the z maximum "))
+    
+    return x_min, x_max, y_min, y_max, z_min, z_max
+
+def generatePointCloud():
+    
+    pc = np.random.randint(100,201, size=(100,3))
+    return pc
+
+def savePointCloud(pc, name="furkan_kara"):
+    np.savetxt(f"point_cloud_{name}.csv", pc, delimiter='*', fmt='%d')
+    
+def convertPCToDataFrame(pc):
+    df = pd.DataFrame({
+        'axis_1': pc[:,0],
+        'axis_2': pc[:,1],
+        'axis_3': pc[:,2],
+        })
+    return df
+
+def findIndicesOfPointInBoundaries(df, x_min, x_max, y_min, y_max, z_min, z_max):
+    mask = (df['axis_1'] >= x_min) & (df['axis_1'] <= x_max) & \
+           (df['axis_2'] >= y_min) & (df['axis_2'] <= y_max) & \
+           (df['axis_3'] >= z_min) & (df['axis_3'] <= z_max)
+           
+    indices = df[mask].index.tolist()#df[mask] ile şarta uyan satırların tam verisini dataframe tipinde alırsın.Bu şekilde ise şarta uyanların indexlerini list şeklinde alırsın
+    return indices    
+
+def findPoints(pc, indices, flag):
+    if flag:
+        extracted = pc[indices]
+        remaining = np.delete(pc, indices, axis=0)#axis = 0 satır , axis=1 sütun
+    else:
+        remaining = pc[indices]
+        extracted = np.delete(pc, indices, axis=0)
+        
+    return extracted, remaining
+
+def writeExtractedRemainingToCSV(extracted, remaining, name="furkan_kara"):
+    
+    np.savetxt(f"extracted_points_{name}.csv", extracted, delimiter='*', fmt='%d')#numpy array , sütunları ayırmak için delimeter, format için fmt değişkenleri ve "" arasında dosya ismini alır
+    np.savetxt(f"remaining_points_{name}.csv", remaining, delimiter='*', fmt='%d')
+
+def plotFilteredPoints(extracted_file, remaining_file):
+    extracted = np.loadtxt(extracted_file, delimiter='*')#extracted filedaki verileri tekrardan np array olarak döndürür.
+    remaining = np.loadtxt(remaining_file, delimiter='*')
+    
+    fig = plt.figure()#boş bir tuval penceresi oluşturma gibi düşün
+    ax = fig.add_subplot(111, projection='3d')#3 boyutlu bir eksen ekler.figure birden fazla grafik eksen içerir.Bu küçük grafik alanlarına subplot denir.
+    #eğer fig.add_subplot(211) olsayxı figürün içine 2 satır 1 sütun olaccak şekilde subplot yerleştirirdik ve sondaki 1 ile de bunu üstteki grafik olarak düşünebiliriz.
+    #bu sayede aynı pencerede 2 adet grafik çizebiliriz.
+    
+    ax.scatter(extracted[:, 0], extracted[:, 1], extracted[:, 2], color='r', label="Extracted")#3d dağılım grafiği çizer.ax exenine yani subplota noktalar yerleştirir.x,y,z koordinatlarını alır.
+    ax.scatter(remaining[:, 0], remaining[:, 1], remaining[:, 2], color='g', label="Remaining")
+    ax.legend()#labelları ekrana yazdırmak için kullanılır.
+    plt.title("3D Point Cloud - Extracted vs Remaining")#grafiğe başlık verir.
+    plt.show()#grafik penceresini görsel olarak ekrana bastırır.
+    
+main()
+    
+    
+    
+    
