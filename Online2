@@ -1,0 +1,74 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Mar 22 22:41:02 2025
+
+@author: furkan
+"""
+import random
+import math
+
+def main():
+    p1, p2, p3 = [], [], []
+    
+    initalizeCoordinates(p1,p2,p3)
+    print("P1 coordinates:",p1)
+    print("P2 coordinates:",p2)
+    print("P3 coordinates:",p3)
+    
+    norm_vector = calculateNormals(p1,p2,p3)
+    print("Normal vector = ",norm_vector)
+    
+    angle_vector=calculateAngles(norm_vector)
+    print("Angles = ",angle_vector)
+    
+
+    
+    degree = float(input("Enter a threshold value in terms of degree "))
+    
+    result=isSameSurface(angle_vector,degree)
+    
+    if result == True:
+        print("The points lie on the same surface")
+    else:
+        print("The points do not lie on the same surface")
+        
+    
+
+def initalizeCoordinates(p1,p2,p3):
+    coordinates=[7,8,9,10,11,12,13,14,15]
+    p1.extend(random.choices(coordinates, k=3))
+    p2.extend(random.choices(coordinates, k=3))
+    p3.extend(random.choices(coordinates, k=3))#listeye liste eklemek için kullanılır. append ile liste eklenirse liste içinde liste oluşur([1,2,[2,3]])vb
+                                                #insert ile listenin istediğin indexli yerine elemanı eklersin
+                                                #list mutabledır. Yani fonksiyonda değişirse maindede değişir.(int,floatvb ve tuple değil)
+                                                #ancak p1=xxxx gibi bir işlem yapalırsa artık fonksiyondaki p1 maindeki p1 referans etmez onun yerine senin oluşturduğun yeni listeyi referanslar.
+                                                #bu yüzde fonksiyonda yaptığın değişiklik main gövdesine yansımaz ve return etmen gerekir.
+        
+    
+    
+def calculateNormals(x1,x2,x3):
+    nx=(x2[1]-x1[1])*(x3[2]-x1[2])-(x2[2]-x1[2])*(x3[1]-x1[1])
+    ny=(x2[2]-x1[2])*(x3[0]-x1[0])-(x2[0]-x1[0])*(x3[2]-x1[2])
+    nz=(x2[0]-x1[0])*(x3[1]-x1[1])-(x2[1]-x1[1])*(x3[0]-x1[0])
+    
+    
+    return [nx,ny,nz]
+    
+def calculateAngles(norm_vector):
+    nox, noy, noz = norm_vector
+    angx=math.acos(nox/math.sqrt(nox**2 + noy**2 + noz**2)) * 180/math.pi
+    angy=math.acos(noy/math.sqrt(nox**2 + noy**2 + noz**2)) * 180/math.pi
+    angz=math.acos(noz/math.sqrt(nox**2 + noy**2 + noz**2)) * 180/math.pi
+    
+    return [angx,angy,angz]
+
+def isSameSurface(angle_vector,degree):
+    anglex, angley, anglez = angle_vector
+    
+    if (abs(anglex-angley)<degree) and (abs(anglex-anglez)<degree) and (abs(anglez-angley)<degree):
+        return True
+    else:
+        return False
+
+
+main()
