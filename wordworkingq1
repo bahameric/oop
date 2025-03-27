@@ -1,0 +1,83 @@
+import numpy as np  # Sayısal işlemler için NumPy kütüphanesi
+import pandas as pd  # Veri çerçevesi işlemleri için Pandas
+import matplotlib.pyplot as plt  # Grafik çizimi için Matplotlib
+from mpl_toolkits.mplot3d import Axes3D  # 3D grafik çizimi için eklenti
+
+# Kullanıcıdan küp uzunluğu ve voxel adım boyutu al
+def getParameters():
+    l = int(input("Küp uzunluğu (l): "))  # Küpün kenar uzunluğu
+    ss = int(input("Voxel adım boyutu (step size): "))  # Voxel boyutu
+    return l, ss  # İkisini birlikte döndür
+
+# Rastgele 200 adet 3D nokta üret
+def generatePointCloud(length):
+    return np.random.randint(0, length, size=(200, 3))  # 0-length arası tamsayılardan 200x3 matris
+
+# Nokta bulutunu DataFrame'e çevir ve CSV dosyasına yaz
+def writePCToDataFrameAndFile(points):
+    df = pd.DataFrame({
+        'axis_1': points[:, 0],  # x koordinatları
+        'axis_2': points[:, 1],  # y koordinatları
+        'axis_3': points[:, 2]   # z koordinatları
+    })
+    df.to_csv('point_cloud.csv', sep='/', index=False)  # '/' ile ayır, index yazma
+
+# Voxel'lerin içine düşen noktaları bul
+def findPointsInAVoxel(points, length, step):
+    voxels = {}  # Boş bir sözlük başlat
+
+    # 3D küpü adım adım dolaş
+    for i in range(0, length, step):  # x yönü
+        for j in range(0, length, step):  # y yönü
+            for k in range(0, length, step):  # z yönü
+
+                # Bu voxel içine düşen noktaları filtrele
+                mask = (
+                    (points[:, 0] >= i) & (points[:, 0] < i + step) &
+                    (points[:, 1] >= j) & (points[:, 1] < j + step) &
+                    (points[:, 2] >= k) & (points[:, 2] < k + step)
+                )
+                voxel_points = points[mask]  # Filtrelenmiş noktaları al
+
+                if len(voxel_points) > 0:
+                    voxels[(i, j, k)] = voxel_points  # Bu voxel'e ait noktaları sözlüğe ekle
+
+    return voxels  # Voxel sözlüğünü döndür
+
+# Her voxel içindeki noktaların ortalamasını hesapla ve CSV'ye yaz
+def calculateVoxelMeans(voxels, length, step):
+    means = np.zeros((len(voxels), 3))  # Ortalama sonuçları saklamak için boş array
+
+    for i, voxel in enumerate(voxels.values()):
+        means[i] = voxel.mean(axis=0)  # Her voxel'in x, y, z ortalamasını al
+
+    np.savetxt("voxel_means.csv", means, delimiter=",")  # Sonuçları CSV olarak kaydet
+
+# Nokta bulutu ve ortalama noktaları 3D olarak çiz
+def plotFilteredPoints():
+    df = pd.read_csv("point_cloud.csv", sep="/")  # Noktaları oku
+    mean_points = np.loadtxt("voxel_means.csv", delimiter=",")  # Ortalamaları oku
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')  # 3D grafik başlat
+
+    ax.scatter(df['axis_1'], df['axis_2'], df['axis_3'], c='red', label='Point Cloud')  # Noktaları kırmızı çiz
+    ax.scatter(mean_points[:, 0], mean_points[:, 1], mean_points[:, 2], c='green', label='Voxel Means')  # Ortalamaları yeşil çiz
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.legend()
+    plt.title("Voxel Filtering of 3D Point Cloud")
+    plt.show()  # Grafiği göster
+
+# Tüm işlemleri sırasıyla yap
+def main():
+    l, ss = getParameters()  # Parametreleri al
+    points = generatePointCloud(l)  # Noktaları üret
+    writePCToDataFrameAndFile(points)  # Dosyaya yaz
+    voxels = findPointsInAVoxel(points, l, ss)  # Voxel işlemi yap
+    calculateVoxelMeans(voxels, l, ss)  # Ortalama al
+    plotFilteredPoints()  # Sonuçları çiz
+
+main()  # Programı çalıştır
